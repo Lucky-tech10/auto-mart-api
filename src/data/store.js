@@ -23,8 +23,7 @@ const dataOperations = {
   findUserByEmail: (email) =>
     storage.users.find((user) => user.email === email),
 
-  findUserById: (id) =>
-    storage.users.find((user) => user.id === parseInt(id, 10)),
+  findUserById: (id) => storage.users.find((user) => user.id === id),
 };
 
 module.exports = {
