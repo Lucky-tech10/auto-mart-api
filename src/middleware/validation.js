@@ -1,4 +1,4 @@
-const { body, validationResult } = require("express-validator");
+const { body, param, validationResult, query } = require("express-validator");
 
 // Validation error handler
 const handleValidationErrors = (req, res, next) => {
@@ -77,13 +77,58 @@ const validateCreateCar = [
   handleValidationErrors,
 ];
 
+const validateCarQuery = [
+  query("state")
+    .optional()
+    .isIn(["new", "used"])
+    .withMessage('State must be either "new" or "used"'),
+  query("min_price")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Min price must be a non-negative number"),
+  query("max_price")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Max price must be a non-negative number"),
+  query("make")
+    .optional()
+    .isIn([
+      "toyota",
+      "honda",
+      "ford",
+      "chevrolet",
+      "bmw",
+      "mercedes",
+      "audi",
+      "lexus",
+      "nissan",
+      "hyundai",
+    ])
+    .withMessage("Invalid car make"),
+  query("body_type")
+    .optional()
+    .trim()
+    .isIn([
+      "sedan",
+      "suv",
+      "hatchback",
+      "coupe",
+      "convertible",
+      "wagon",
+      "pickup",
+      "minivan",
+    ])
+    .withMessage("Invalid body type"),
+  handleValidationErrors,
+];
+
 const validateSingleCar = [
-  body("id").isUUID().withMessage("Invalid car ID format"),
+  param("id").isUUID().withMessage("Invalid car ID format"),
   handleValidationErrors,
 ];
 
 const validateUpdateCarPrice = [
-  body("id").isUUID().withMessage("Invalid car ID format"),
+  param("id").isUUID().withMessage("Invalid car ID format"),
   body("price")
     .isFloat({ min: 0.01 })
     .withMessage("Price must be a positive number"),
@@ -91,18 +136,15 @@ const validateUpdateCarPrice = [
 ];
 
 const validateCarStatus = [
-  body("id").isUUID().withMessage("Invalid car ID format"),
+  param("id").isUUID().withMessage("Invalid car ID format"),
   body("status")
     .isIn(["available", "sold"])
     .withMessage('Status must be either "available" or "sold"'),
   handleValidationErrors,
 ];
-const validateCarId = [
-  body("id").isUUID().withMessage("Invalid car ID format"),
-  handleValidationErrors,
-];
+
 const validateDeleteCar = [
-  body("id").isUUID().withMessage("Invalid car ID format"),
+  param("id").isUUID().withMessage("Invalid car ID format"),
   handleValidationErrors,
 ];
 
@@ -110,9 +152,9 @@ module.exports = {
   validateRegister,
   validateLogin,
   validateCreateCar,
+  validateCarQuery,
   validateSingleCar,
   validateUpdateCarPrice,
   validateCarStatus,
-  validateCarId,
   validateDeleteCar,
 };

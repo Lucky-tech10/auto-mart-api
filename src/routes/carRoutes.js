@@ -1,17 +1,19 @@
 const router = require("express").Router();
 const {
   validateCreateCar,
+  validateCarQuery,
   validateSingleCar,
   validateUpdateCarPrice,
   validateCarStatus,
-  validateCarId,
   validateDeleteCar,
 } = require("../middleware/validation");
 const upload = require("../middleware/upload");
-const { authMiddleware } = require("../middleware/auth");
+const { authMiddleware, authorizePermissions } = require("../middleware/auth");
 const {
   createCar,
-  getAllCars,
+  getAvailableCars,
+  getAdminCars,
+  getSingleUserCars,
   getSingleCar,
   updateCarStatus,
   updateCarPrice,
@@ -21,9 +23,26 @@ const {
 router
   .route("/")
   .post(authMiddleware, upload.array("images", 5), validateCreateCar, createCar)
-  .get(getAllCars);
-router.route("/:id").get(getSingleCar).delete(authMiddleware, deleteCar);
-router.route("/:id/status").patch(authMiddleware, updateCarStatus);
-router.route("/:id/price").patch(authMiddleware, updateCarPrice);
+  .get(validateCarQuery, getAvailableCars);
+router.route("/user").get(authMiddleware, getSingleUserCars);
+router
+  .route("/admin")
+  .get(authMiddleware, authorizePermissions("admin"), getAdminCars);
+router
+  .route("/:id")
+  .get(validateSingleCar, getSingleCar)
+  .delete(
+    authMiddleware,
+    authorizePermissions("admin"),
+    validateDeleteCar,
+    deleteCar
+  );
+router
+  .route("/:id/status")
+  .patch(authMiddleware, validateCarStatus, updateCarStatus);
+
+router
+  .route("/:id/price")
+  .patch(authMiddleware, validateUpdateCarPrice, updateCarPrice);
 
 module.exports = router;
