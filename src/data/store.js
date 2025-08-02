@@ -39,6 +39,14 @@ const dataOperations = {
 
   findCarById: (id) => storage.cars.find((car) => car.id === id),
 
+  findCarsByOwner: (ownerId) =>
+    storage.cars.filter((car) => car.owner === ownerId),
+
+  findCarsByStatus: (status) =>
+    storage.cars.filter(
+      (car) => car.status && car.status.toLowerCase() === status.toLowerCase()
+    ),
+
   getAllCars: () => storage.cars,
 
   updateCarStatus: (id, status) => {

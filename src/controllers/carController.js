@@ -2,6 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const { dataOperations } = require("../data/store");
 const cloudinary = require("../config/cloudinary");
+const checkPermissions = require("../utils/checkPermission");
 
 const createCar = async (req, res) => {
   const files = req.files;
@@ -47,7 +48,7 @@ const createCar = async (req, res) => {
     );
   }
 
-  const newCar = dataOperations.createCar({
+  const newCar = await dataOperations.createCar({
     owner: req.user.id,
     ...req.body,
     images: urls,
@@ -57,47 +58,192 @@ const createCar = async (req, res) => {
   res.status(StatusCodes.CREATED).json({
     status: StatusCodes.CREATED,
     data: {
-      id: newCar.id,
-      owner: newCar.owner,
       email: req.user.email,
-      make: newCar.make,
-      model: newCar.model,
-      price: newCar.price,
-      state: newCar.state,
-      status: newCar.status,
-      description: newCar.description,
-      location: newCar.location,
-      body_type: newCar.body_type,
-      images: newCar.images,
-      mainPhotoIndex: newCar.mainPhotoIndex,
-      created_on: newCar.created_on,
+      ...newCar,
     },
   });
 };
 
-const getAllCars = (req, res) => {
-  res.send("get all cars");
+const getAvailableCars = (req, res) => {
+  // Filter available cars
+
+  let filteredCars = dataOperations.findCarsByStatus("available");
+
+  if (filteredCars.length === 0) {
+    return res.status(StatusCodes.OK).json({
+      status: StatusCodes.OK,
+      message: "No available cars found",
+      data: [],
+    });
+  }
+
+  // Filter by state
+  if (req.query.state) {
+    filteredCars = filteredCars.filter((car) => car.state === req.query.state);
+  }
+
+  // Filter by manufacturer
+  if (req.query.make) {
+    filteredCars = filteredCars.filter(
+      (car) => car.make.toLowerCase() === req.query.make.toLowerCase()
+    );
+  }
+
+  // Filter by body type
+  if (req.query.body_type) {
+    filteredCars = filteredCars.filter(
+      (car) => car.body_type === req.query.body_type
+    );
+  }
+
+  // Filter by price range
+  const minPrice = parseFloat(req.query.min_price);
+  const maxPrice = parseFloat(req.query.max_price);
+
+  if (!isNaN(minPrice)) {
+    filteredCars = filteredCars.filter((car) => car.price >= minPrice);
+  }
+
+  if (!isNaN(maxPrice)) {
+    filteredCars = filteredCars.filter((car) => car.price <= maxPrice);
+  }
+
+  // Pagination
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 12;
+  const totalCars = filteredCars.length;
+  const totalPages = Math.ceil(totalCars / limit);
+
+  // Get total number of available cars
+  const totalAvailableCars =
+    dataOperations.findCarsByStatus("available").length;
+
+  const paginatedCars = filteredCars.slice((page - 1) * limit, page * limit);
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    page,
+    limit,
+    totalPages,
+    totalCars, // total number of cars after filtering
+    totalAvailableCars, // total number of available cars
+    data: paginatedCars,
+  });
+};
+
+const getAdminCars = (req, res) => {
+  const cars = dataOperations.getAllCars();
+  if (cars.length === 0) {
+    return res.status(StatusCodes.OK).json({
+      status: StatusCodes.OK,
+      message: "No cars available",
+      data: [],
+    });
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: cars,
+  });
+};
+
+const getSingleUserCars = (req, res) => {
+  const userId = req.user.id;
+  const cars = dataOperations.findCarsByOwner(userId);
+
+  if (cars.length === 0) {
+    return res.status(StatusCodes.OK).json({
+      status: StatusCodes.OK,
+      message: "No cars found for this user",
+      data: [],
+    });
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: cars,
+  });
 };
 
 const getSingleCar = (req, res) => {
-  res.send("get single Car");
+  const carId = req.params.id;
+  const car = dataOperations.findCarById(carId);
+  if (!car) {
+    throw new CustomError.NotFoundError("Car not found");
+  }
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: car,
+  });
 };
 
 const updateCarStatus = (req, res) => {
-  res.send("status updated");
+  const carId = req.params.id;
+  const { status } = req.body;
+
+  if (!status) {
+    throw new CustomError.BadRequestError("Please provide a status");
+  }
+
+  const car = dataOperations.findCarById(carId);
+  if (!car) {
+    throw new CustomError.NotFoundError("Car not found");
+  }
+
+  // Check permissions
+  checkPermissions(req.user, car.owner);
+
+  const updatedCar = dataOperations.updateCarStatus(carId, status);
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: updatedCar,
+  });
 };
 
 const updateCarPrice = (req, res) => {
-  res.send("price updated");
+  const carId = req.params.id;
+  const { price } = req.body;
+
+  if (!price) {
+    throw new CustomError.BadRequestError("Please provide a price");
+  }
+
+  const car = dataOperations.findCarById(carId);
+  if (!car) {
+    throw new CustomError.NotFoundError("Car not found");
+  }
+
+  // Check permissions
+  checkPermissions(req.user, car.owner);
+
+  const updatedCar = dataOperations.updateCarPrice(carId, price);
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: updatedCar,
+  });
 };
 
 const deleteCar = (req, res) => {
-  res.send("car deleted");
+  const carId = req.params.id;
+
+  const deletedCar = dataOperations.deleteCar(carId);
+  if (!deletedCar) {
+    throw new CustomError.NotFoundError("Car not found");
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    message: "Car deleted successfully",
+  });
 };
 
 module.exports = {
   createCar,
-  getAllCars,
+  getAvailableCars,
+  getAdminCars,
+  getSingleUserCars,
   getSingleCar,
   updateCarStatus,
   updateCarPrice,
