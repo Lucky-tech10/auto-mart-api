@@ -4,6 +4,9 @@ const CustomError = require("../errors");
 const { dataOperations } = require("../data/store");
 const generateToken = require("../utils/generateToken");
 const sanitizeUser = require("../utils/sanitize");
+const sendResetPassswordEmail = require("../utils/sendResetPasswordEmail");
+const crypto = require("crypto");
+const createHash = require("../utils/createHash");
 
 const register = async (req, res) => {
   const { email, first_name, last_name, password, address } = req.body;
@@ -73,7 +76,83 @@ const login = async (req, res) => {
   });
 };
 
+// Request password reset
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  if (!email)
+    throw new CustomError.BadRequestError("Please provide valid email");
+
+  const user = dataOperations.findUserByEmail(email);
+
+  if (user) {
+    // Generate and hash token
+    const resetToken = crypto.randomBytes(70).toString("hex");
+    const resetTokenHash = createHash(resetToken);
+
+    // Send reset email
+    await sendResetPassswordEmail({
+      name: user.first_name,
+      email: user.email,
+      token: resetToken,
+      origin: process.env.FRONTEND_URL,
+    });
+
+    // Store reset token
+    dataOperations.createResetToken(user.id, user.email, resetTokenHash);
+
+    // Clean expired tokens
+    dataOperations.cleanupExpiredTokens();
+
+    console.log("Reset token :", resetToken);
+    console.log("Reset token :", resetTokenHash);
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    message: "Password reset token created",
+  });
+};
+
+const resetPassword = async (req, res) => {
+  const { token, email, new_password } = req.body;
+  if (!token || !email || !new_password) {
+    throw new CustomError.BadRequestError("Please provide all required fields");
+  }
+
+  dataOperations.cleanupExpiredTokens();
+
+  const user = dataOperations.findUserByEmail(email);
+  if (!user) {
+    throw new CustomError.NotFoundError("User not found");
+  }
+
+  const resetTokenHash = createHash(token);
+  const isValidToken = dataOperations.verifyResetToken(email, resetTokenHash);
+
+  if (!isValidToken || new Date(isValidToken.expires_at) < new Date()) {
+    throw new CustomError.UnauthenticatedError(
+      "Invalid or expired reset token"
+    );
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(new_password, 10);
+
+  // Update user's password
+  dataOperations.updateUser(user.id, { password: hashedPassword });
+
+  // Delete used token
+  dataOperations.deleteResetToken(resetTokenHash);
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    message: "Password has been reset successfully",
+  });
+};
+
 module.exports = {
   register,
   login,
+  requestPasswordReset,
+  resetPassword,
 };

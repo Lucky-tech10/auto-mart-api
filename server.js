@@ -5,7 +5,10 @@ const express = require("express");
 
 // routes
 const authRoutes = require("./src/routes/authRoutes");
+const userRoutes = require("./src/routes/userRoutes");
 const carRoutes = require("./src/routes/carRoutes");
+const orderRoutes = require("./src/routes/orderRoutes");
+const flagRoutes = require("./src/routes/flagRoutes");
 
 // error handler
 const notFoundMiddleware = require("./src/middleware/not-found");
@@ -21,7 +24,10 @@ app.get("/api/v1", (req, res) => {
 
 // routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/car", carRoutes);
+app.use("/api/v1/order", orderRoutes);
+app.use("/api/v1/flag", flagRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);

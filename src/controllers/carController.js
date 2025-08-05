@@ -239,6 +239,28 @@ const deleteCar = (req, res) => {
   });
 };
 
+// check if the logged-in user has made an offer or flagged a car
+const getUserCarActions = (req, res) => {
+  const userId = req.user.id;
+  const carId = req.params.id;
+
+  const car = dataOperations.findCarById(carId);
+  if (!car) {
+    throw new CustomError.NotFoundError("Car not found");
+  }
+
+  const hasOrdered = dataOperations.hasUserOrderedCar(carId, userId);
+  const hasFlagged = dataOperations.hasUserFlaggedCar(carId, userId);
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: {
+      hasOrdered,
+      hasFlagged,
+    },
+  });
+};
+
 module.exports = {
   createCar,
   getAvailableCars,
@@ -248,4 +270,5 @@ module.exports = {
   updateCarStatus,
   updateCarPrice,
   deleteCar,
+  getUserCarActions,
 };
