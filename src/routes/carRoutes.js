@@ -18,6 +18,7 @@ const {
   updateCarStatus,
   updateCarPrice,
   deleteCar,
+  getUserCarActions,
 } = require("../controllers/carController");
 
 router
@@ -28,6 +29,7 @@ router.route("/user").get(authMiddleware, getSingleUserCars);
 router
   .route("/admin")
   .get(authMiddleware, authorizePermissions("admin"), getAdminCars);
+
 router
   .route("/:id")
   .get(validateSingleCar, getSingleCar)
@@ -37,6 +39,8 @@ router
     validateDeleteCar,
     deleteCar
   );
+router.get("/:id/actions", authMiddleware, getUserCarActions);
+
 router
   .route("/:id/status")
   .patch(authMiddleware, validateCarStatus, updateCarStatus);
