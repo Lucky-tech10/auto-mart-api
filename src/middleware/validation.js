@@ -70,13 +70,13 @@ const validateNewPassword = [
 const validateUpdatePassword = [
   body("current_password")
     .isLength({ min: 8 })
-    .withMessage("New password must be at least 8 characters long"),
+    .withMessage("Current password must be at least 8 characters long"),
   body("new_password")
     .isLength({ min: 8 })
     .withMessage("New password must be at least 8 characters long"),
   body("confirm_password")
     .isLength({ min: 8 })
-    .withMessage("New password must be at least 8 characters long"),
+    .withMessage("Confirm password must be at least 8 characters long"),
   handleValidationErrors,
 ];
 

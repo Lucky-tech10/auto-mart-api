@@ -44,7 +44,7 @@ const createCar = async (req, res) => {
     });
   } catch (error) {
     throw new CustomError.BadRequestError(
-      "Image upload failed" + error.message
+      "Image upload failed: " + error.message
     );
   }
 

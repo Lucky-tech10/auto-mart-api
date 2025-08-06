@@ -174,4 +174,5 @@ const dataOperations = {
 
 module.exports = {
   dataOperations,
+  storage, // Export storage for testing purposes
 };
