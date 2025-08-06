@@ -4,11 +4,11 @@ const { body, param, validationResult, query } = require("express-validator");
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: 400,
-      error: "Validation failed",
-      details: errors.array(),
-    });
+    const message = errors
+      .array()
+      .map((err) => err.msg)
+      .join(", ");
+    return res.status(400).json({ error: "Validation failed", msg: message });
   }
   next();
 };
