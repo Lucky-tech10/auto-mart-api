@@ -12,6 +12,7 @@
     "test:watch": "jest --watch --detectOpenHandles",
     "test:coverage": "jest --coverage --detectOpenHandles --forceExit",
     "test:auth": "jest test/auth.test.js --detectOpenHandles --forceExit",
+    "test:user": "jest test/user.test.js --detectOpenHandles --forceExit",
     "test:car": "jest test/car.test.js --detectOpenHandles --forceExit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
