@@ -244,6 +244,23 @@ describe("Flag Routes", () => {
       expect(response.body.error).toBe("Validation failed");
     });
 
+    it("should accept description at character limit", async () => {
+      const flagData = {
+        car_id: testData.car1.id,
+        reason: "Suspicious pricing",
+        description: "a".repeat(200), // Exactly 200 characters
+      };
+
+      const response = await request(app)
+        .post("/api/v1/flag")
+        .set("Authorization", `Bearer ${secondUserToken}`)
+        .send(flagData)
+        .expect(201);
+
+      expect(response.body.status).toBe(201);
+      expect(response.body.data.description).toBe(flagData.description);
+    });
+
     it("should trim whitespace from reason and description", async () => {
       const flagData = {
         car_id: testData.car1.id,
