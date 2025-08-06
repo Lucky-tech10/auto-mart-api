@@ -15,6 +15,7 @@
     "test:user": "jest test/user.test.js --detectOpenHandles --forceExit",
     "test:car": "jest test/car.test.js --detectOpenHandles --forceExit",
     "test:order": "jest test/order.test.js --detectOpenHandles --forceExit",
+    "test:flag": "jest test/flag.test.js --detectOpenHandles --forceExit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
