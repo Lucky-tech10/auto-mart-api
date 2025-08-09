@@ -504,4 +504,68 @@ describe("Car Routes", () => {
       expect(response.body.error).toBe("Validation failed");
     });
   });
+
+  describe("GET /api/v1/car/:id/order", () => {
+    const { dataOperations, storage } = require("../src/data/store");
+    let testOrder;
+
+    beforeEach(() => {
+      // Create a test order
+      testOrder = dataOperations.createOrder({
+        car_id: testData.car1.id,
+        buyer: testData.secondUser.id,
+        amount: 24000,
+      });
+    });
+
+    it("should get user order for car successfully", async () => {
+      const response = await request(app)
+        .get(`/api/v1/car/${testData.car1.id}/order`)
+        .set("Authorization", `Bearer ${secondUserToken}`)
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        status: 200,
+        data: {
+          id: testOrder.id,
+          car_id: testData.car1.id,
+          buyer: testData.secondUser.id,
+          amount: 24000,
+          status: "pending",
+        },
+      });
+    });
+
+    it("should return 404 when user has no order for the car", async () => {
+      const response = await request(app)
+        .get(`/api/v1/car/${testData.car1.id}/order`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(404);
+
+      expect(response.body.msg).toBe("Order not found for this Car");
+    });
+
+    it("should not return other users orders", async () => {
+      // Create order for different user on same car
+      const differentUser = { id: "2d099819-aa15-4957-8aa2-c3aa0e505581" };
+      const otherUserOrder = {
+        id: "2d099819-aa15-4957-8cc2-c3aa0e505581",
+        car_id: testData.car1.id,
+        buyer: differentUser.id,
+        amount: 22000000,
+        status: "pending",
+      };
+      storage.orders.push(otherUserOrder);
+
+      const response = await request(app)
+        .get(`/api/v1/car/${testData.car1.id}/order`)
+        .set("Authorization", `Bearer ${secondUserToken}`)
+        .expect(200);
+
+      // Should return current user's order, not the other user's order
+      expect(response.body.data.buyer).toBe(testData.secondUser.id);
+      expect(response.body.data.id).toBe(testOrder.id);
+      expect(response.body.data.amount).toBe(24000); // Current user's amount
+    });
+  });
 });

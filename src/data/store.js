@@ -117,6 +117,11 @@ const dataOperations = {
       (order) => order.car_id === carId && order.buyer === userId
     ),
 
+  findOrderByCar: (carId, buyerId) =>
+    storage.orders.find(
+      (order) => order.car_id === carId && order.buyer === buyerId
+    ),
+
   // Flag operations
   createFlag: (flagData) => {
     const flag = {
