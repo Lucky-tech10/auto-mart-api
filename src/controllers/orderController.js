@@ -61,7 +61,24 @@ const updateOrderPrice = (req, res) => {
   });
 };
 
+const getUserCarOrder = (req, res) => {
+  const { id: carId } = req.params;
+  const userId = req.user.id;
+
+  const order = dataOperations.findOrderByCar(carId, userId);
+
+  if (!order) {
+    throw new CustomError.NotFoundError("Order not found for this Car");
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    data: order,
+  });
+};
+
 module.exports = {
   createOrder,
   updateOrderPrice,
+  getUserCarOrder,
 };

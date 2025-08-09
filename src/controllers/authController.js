@@ -102,11 +102,6 @@ const requestPasswordReset = async (req, res) => {
 
     // Clean expired tokens
     dataOperations.cleanupExpiredTokens();
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("Reset token :", resetToken);
-      console.log("Reset token :", resetTokenHash);
-    }
   }
 
   res.status(StatusCodes.OK).json({

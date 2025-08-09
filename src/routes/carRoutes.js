@@ -6,6 +6,7 @@ const {
   validateUpdateCarPrice,
   validateCarStatus,
   validateDeleteCar,
+  validateUserCarOrder,
 } = require("../middleware/validation");
 const upload = require("../middleware/upload");
 const { authMiddleware, authorizePermissions } = require("../middleware/auth");
@@ -20,6 +21,8 @@ const {
   deleteCar,
   getUserCarActions,
 } = require("../controllers/carController");
+
+const { getUserCarOrder } = require("../controllers/orderController");
 
 router
   .route("/")
@@ -48,5 +51,7 @@ router
 router
   .route("/:id/price")
   .patch(authMiddleware, validateUpdateCarPrice, updateCarPrice);
+
+router.get("/:id/order", authMiddleware, validateUserCarOrder, getUserCarOrder);
 
 module.exports = router;

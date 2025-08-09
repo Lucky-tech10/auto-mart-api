@@ -215,6 +215,11 @@ const validateCreateflag = [
   handleValidationErrors,
 ];
 
+const validateUserCarOrder = [
+  param("id").isUUID().withMessage("Invalid car ID format"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateRegister,
   validateLogin,
@@ -230,4 +235,5 @@ module.exports = {
   validateCreateOrder,
   validateUpdateOrderPrice,
   validateCreateflag,
+  validateUserCarOrder,
 };
