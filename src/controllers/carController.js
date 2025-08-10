@@ -171,9 +171,21 @@ const getSingleCar = (req, res) => {
   if (!car) {
     throw new CustomError.NotFoundError("Car not found");
   }
+  const user = dataOperations.findUserById(car.owner);
+  let first_name, last_name;
+  if (user) {
+    ({ first_name, last_name } = user);
+  }
+
   res.status(StatusCodes.OK).json({
     status: StatusCodes.OK,
-    data: car,
+    data: {
+      ...car,
+      user: {
+        first_name,
+        last_name,
+      },
+    },
   });
 };
 
